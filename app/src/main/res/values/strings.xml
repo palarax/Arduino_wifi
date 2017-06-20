@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Arduino Wifi controller</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+
+    <!--- navigation header -->
+    <string name="nav_header_name">Ilya</string>
+    <string name="nav_header_summary">RC wifi module</string>
+
+    <!--- navigation strings -->
+    <string name="nav_wifi_config">Wifi config</string>
+    <string name="nav_controls">Controls</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_configuration">Controls configuration</string>
+
+</resources>
