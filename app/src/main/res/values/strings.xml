@@ -16,4 +16,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_configuration">Controls configuration</string>
 
+    <!-- toasts -->
+    <string name="wifi_connect">Connecting to wifi</string>
+
 </resources>

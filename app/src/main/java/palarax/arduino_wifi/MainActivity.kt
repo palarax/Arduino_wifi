@@ -1,6 +1,15 @@
 package palarax.arduino_wifi
 
+import android.Manifest
+import android.app.Fragment
+import android.content.Context
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.NavigationView
 import android.support.design.widget.Snackbar
@@ -9,10 +18,43 @@ import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.Toolbar
-import android.view.Menu
-import android.view.MenuItem
+import android.view.*
+import android.widget.Toast
+
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    private val TAG = "MainActivity"
+
+    companion object {
+        private const val PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 120
+    }
+
+    private val wifi_fragment = fragmentManager.findFragmentByTag("wifi_fragment") ?: WifiFragment()
+    private val home_fragment = fragmentManager.findFragmentByTag("home_fragment") ?: MainFragment()
+
+    var wifiReceiver: WifiReceiver? = null
+
+    private val peers = ArrayList<WifiP2pDevice>()
+
+    //is wifi enabled
+    var isEnabled: Boolean? = false
+
+    //Channels for WIFI P2P
+    var mChannel: WifiP2pManager.Channel? = null
+
+    //Wifi manager
+    private val mP2Pmanger: WifiP2pManager
+        get() = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
+
+    //listens to events in onCreate
+    private val intentFilter = IntentFilter()
+
+
+    fun setIsWifiP2pEnabled(isWifiP2pEnabled: Boolean) {
+        this.isEnabled = isWifiP2pEnabled
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +76,37 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         val navigationView = findViewById(R.id.nav_view) as NavigationView
         navigationView.setNavigationItemSelectedListener(this)
+
+        //Initial fragment
+        fragmentManager.beginTransaction()
+        .replace(R.id.main_frag,home_fragment)
+                .commit()
+
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)        // Indicates a change in the Wi-Fi P2P status.
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)        //Indicates a change in the list of available peers.
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)   //Indicates the state of Wi-Fi P2P connectivity has changed.
+        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)  //Indicates this device's details have changed.
+
+        mChannel = mP2Pmanger.initialize(this, Looper.getMainLooper(), null)    //return channel which is used to connect to P2P framework
+        wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+    }
+
+    fun discoverPeers()
+    {
+        mP2Pmanger.discoverPeers(mChannel, object : WifiP2pManager.ActionListener {
+
+            override fun onSuccess() {
+                // Code for when the discovery initiation is successful goes here.
+                // No services have actually been discovered yet, so this method
+                // can often be left blank.  Code for peer discovery goes in the
+                // onReceive method, detailed below.
+            }
+
+            override fun onFailure(reasonCode: Int) {
+                Toast.makeText(baseContext, "Connect failed. Retry.",
+                        Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     override fun onBackPressed() {
@@ -44,6 +117,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             super.onBackPressed()
         }
     }
+
+    override fun onStart() {
+        super.onStart()
+        wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+        registerReceiver(wifiReceiver, intentFilter)
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+        wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+        registerReceiver(wifiReceiver, intentFilter)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(wifiReceiver)
+    }
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -70,9 +162,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         val id = item.itemId
 
         if (id == R.id.nav_home) {
-            // Handle the camera action
-        } else if (id == R.id.nav_wifi) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.main_frag,home_fragment)
+                    .commit()
 
+        } else if (id == R.id.nav_wifi) {
+            fragmentManager.beginTransaction()
+            .replace(R.id.main_frag,wifi_fragment)
+                    .commit()
         } else if (id == R.id.nav_controls) {
 
         } else if (id == R.id.nav_manage) {
@@ -87,4 +184,42 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         drawer.closeDrawer(GravityCompat.START)
         return true
     }
+
+    private fun checkPermissions(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !== PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                    PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION)
+            return false
+        } else {
+            return true
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION -> {
+                //startScanning here
+            }
+        }
+    }
+
+    class MainFragment : Fragment(){
+
+
+        override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            return inflater?.inflate(R.layout.home_fragment,container,false)
+        }
+    }
+
+    class WifiFragment : Fragment(){
+
+
+        override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+            return inflater?.inflate(R.layout.wifi_fragment,container,false)
+        }
+    }
+
 }
