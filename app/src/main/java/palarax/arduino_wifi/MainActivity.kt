@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private val wifi_fragment = fragmentManager.findFragmentByTag("wifi_fragment") ?: WifiFragment()
     private val home_fragment = fragmentManager.findFragmentByTag("home_fragment") ?: MainFragment()
+    private val bluetooth_fragment = fragmentManager.findFragmentByTag("bluetooth_fragment") ?: BluetoothFragment()
 
     var wifiReceiver: WifiReceiver? = null
 
@@ -169,6 +170,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         } else if (id == R.id.nav_wifi) {
             fragmentManager.beginTransaction()
             .replace(R.id.main_frag,wifi_fragment)
+                    .commit()
+        } else if (id == R.id.nav_bluetooth) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.main_frag,bluetooth_fragment)
                     .commit()
         } else if (id == R.id.nav_controls) {
 

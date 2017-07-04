@@ -12,8 +12,9 @@
 
     <!--- navigation strings -->
     <string name="nav_wifi_config">Wifi config</string>
+    <string name="nav_blue_config">Bluetooth config</string>
     <string name="nav_controls">Controls</string>
-    <string name="nav_home">Home</string>
+    <string name="nav_home">Configure</string>
     <string name="nav_configuration">Controls configuration</string>
 
     <!-- toasts -->

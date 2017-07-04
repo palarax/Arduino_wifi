@@ -11,6 +11,10 @@
             android:icon="@drawable/ic_wifi_black_24dp"
             android:title="@string/nav_wifi_config" />
         <item
+            android:id="@+id/nav_bluetooth"
+            android:icon="@drawable/ic_bluetooth_black_24dp"
+            android:title="@string/nav_blue_config" />
+        <item
             android:id="@+id/nav_controls"
             android:icon="@drawable/ic_videogame_asset_black_24dp"
             android:title="@string/nav_controls" />
@@ -19,7 +23,6 @@
             android:icon="@drawable/ic_menu_manage"
             android:title="@string/nav_configuration" />
     </group>
-
     <item android:title="Communicate">
         <menu>
             <item
