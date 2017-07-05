@@ -16,6 +16,8 @@ class WifiReceiver(wifiManager: WifiP2pManager, channel : WifiP2pManager.Channel
         val TAG = "Wifi_receiver"
     }
 
+    val PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 120
+
 
     var wifiP2Pmanager : WifiP2pManager? = wifiManager
 
@@ -48,7 +50,29 @@ class WifiReceiver(wifiManager: WifiP2pManager, channel : WifiP2pManager.Channel
 
     }
 
+    /*private fun checkPermissions(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !== android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
+                    PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION)
+            return false
+        } else {
+            return true
+        }
 
+        //<uses-permission android:name="android.permission.BLUETOOTH" />
+        //<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION -> {
+                //startScanning here
+            }
+        }
+    }*/
 
 
 }

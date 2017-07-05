@@ -13,21 +13,43 @@
             android:id="@+id/txt_bluetooth"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-
             android:layout_centerInParent="true"
             android:text="BLUETOOTH"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@android:color/black"
             android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/btnBluetooth"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Connect"
+        <!-- Empty layout (0x0 dp) centered horizontally -->
+        <Space android:id="@+id/dummy"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_centerHorizontal="true"
             android:layout_below="@+id/txt_bluetooth"
-            android:layout_alignEnd="@+id/txt_bluetooth"
-            android:layout_marginTop="12dp" />
+            android:layout_marginTop="10dp"
+            android:visibility="invisible"/>
+
+        <Button
+            android:id="@+id/btnConnect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/dummy"
+            android:layout_toStartOf="@+id/dummy"
+            android:text="Connect" />
+
+        <Button
+            android:id="@+id/btnScan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/dummy"
+            android:layout_toEndOf="@+id/dummy"
+            android:text="Scan" />
+
+        <ListView
+            android:id="@+id/scan_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/btnScan" />
     </RelativeLayout>
 
 

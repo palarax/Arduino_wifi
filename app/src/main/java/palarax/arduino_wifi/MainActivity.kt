@@ -1,13 +1,10 @@
 package palarax.arduino_wifi
 
-import android.Manifest
 import android.app.Fragment
 import android.content.Context
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
-import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.support.design.widget.FloatingActionButton
@@ -25,10 +22,6 @@ import android.widget.Toast
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private val TAG = "MainActivity"
-
-    companion object {
-        private const val PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION = 120
-    }
 
     private val wifi_fragment = fragmentManager.findFragmentByTag("wifi_fragment") ?: WifiFragment()
     private val home_fragment = fragmentManager.findFragmentByTag("home_fragment") ?: MainFragment()
@@ -144,18 +137,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        val id = item.itemId
 
+        R.id.action_settings -> consume { null }
+        //R.id.nav_camera -> drawer.consume { navigateToCamera() }
+        else -> super.onOptionsItemSelected(item)
+    }
 
-        if (id == R.id.action_settings) {
-            return true
-        }
-
-        return super.onOptionsItemSelected(item)
+    inline fun consume(f: () -> Unit): Boolean {
+        f()
+        return true
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
@@ -190,26 +185,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return true
     }
 
-    private fun checkPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !== PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION),
-                    PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION)
-            return false
-        } else {
-            return true
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            PERMISSIONS_REQUEST_CODE_ACCESS_COARSE_LOCATION -> {
-                //startScanning here
-            }
-        }
-    }
 
     class MainFragment : Fragment(){
 
