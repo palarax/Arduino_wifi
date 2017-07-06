@@ -2,11 +2,9 @@ package palarax.arduino_wifi
 
 import android.app.Fragment
 import android.content.Context
-import android.content.IntentFilter
 import android.net.wifi.p2p.WifiP2pDevice
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Bundle
-import android.os.Looper
 import android.support.design.widget.FloatingActionButton
 import android.support.design.widget.NavigationView
 import android.support.design.widget.Snackbar
@@ -42,7 +40,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         get() = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
 
     //listens to events in onCreate
-    private val intentFilter = IntentFilter()
+    //private val intentFilter = IntentFilter()
 
 
     fun setIsWifiP2pEnabled(isWifiP2pEnabled: Boolean) {
@@ -76,13 +74,14 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         .replace(R.id.main_frag,home_fragment)
                 .commit()
 
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)        // Indicates a change in the Wi-Fi P2P status.
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)        //Indicates a change in the list of available peers.
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)   //Indicates the state of Wi-Fi P2P connectivity has changed.
-        intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)  //Indicates this device's details have changed.
+        //intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)        // Indicates a change in the Wi-Fi P2P status.
+        //intentFilter.addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)        //Indicates a change in the list of available peers.
+        //intentFilter.addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)   //Indicates the state of Wi-Fi P2P connectivity has changed.
+        //intentFilter.addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)  //Indicates this device's details have changed.
 
-        mChannel = mP2Pmanger.initialize(this, Looper.getMainLooper(), null)    //return channel which is used to connect to P2P framework
-        wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+        //mChannel = mP2Pmanger.initialize(this, Looper.getMainLooper(), null)    //return channel which is used to connect to P2P framework
+        //wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+
     }
 
     fun discoverPeers()
@@ -114,20 +113,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onStart() {
         super.onStart()
-        wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
-        registerReceiver(wifiReceiver, intentFilter)
+        //wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+        //registerReceiver(wifiReceiver, intentFilter)
     }
 
 
     override fun onResume() {
         super.onResume()
-        wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
-        registerReceiver(wifiReceiver, intentFilter)
+        //wifiReceiver = WifiReceiver(mP2Pmanger, mChannel, this)
+        //registerReceiver(wifiReceiver, intentFilter)
     }
 
     override fun onPause() {
         super.onPause()
-        unregisterReceiver(wifiReceiver)
+        //unregisterReceiver(wifiReceiver)
     }
 
 
