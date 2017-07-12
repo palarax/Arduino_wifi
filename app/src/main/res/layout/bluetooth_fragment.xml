@@ -13,28 +13,38 @@
             android:id="@+id/txt_bluetooth"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="100dp"
             android:text="BLUETOOTH"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="@android:color/black"
             android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/sendMsg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:textSize="20dp"
+            android:hint="Message"
+            android:layout_below="@+id/txt_bluetooth" />
 
         <!-- Empty layout (0x0 dp) centered horizontally -->
         <Space android:id="@+id/dummy"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_centerHorizontal="true"
-            android:layout_below="@+id/txt_bluetooth"
+            android:layout_below="@+id/sendMsg"
             android:layout_marginTop="10dp"
             android:visibility="invisible"/>
 
         <Button
-            android:id="@+id/btnConnect"
+            android:id="@+id/btnSend"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@+id/dummy"
             android:layout_toStartOf="@+id/dummy"
-            android:text="Connect" />
+            android:text="SEND" />
 
         <Button
             android:id="@+id/btnScan"

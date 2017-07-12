@@ -1,8 +1,10 @@
 package palarax.arduino_wifi
 
+import android.Manifest
 import android.app.Activity
 import android.app.Fragment
 import android.bluetooth.BluetoothDevice
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
@@ -11,19 +13,22 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import kotlinx.android.synthetic.main.bluetooth_fragment.*
-import me.aflak.bluetooth.Bluetooth
+import java.util.*
 
 
 /**
  * Created by Ithai on 4/07/2017.
  */
-class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.DiscoveryCallback,Bluetooth.CommunicationCallback {
+class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.arduino_wifi.services.Bluetooth.DiscoveryCallback, palarax.arduino_wifi.services.Bluetooth.CommunicationCallback {
 
     val TAG = "BluetoothFragment"
 
-    lateinit var bluetooth: Bluetooth
+    val PERMISSIONS_REQUEST_CODE = 120
+
+    lateinit var bluetooth: palarax.arduino_wifi.services.Bluetooth
     lateinit var adapter: ArrayAdapter<String>
     lateinit var listView: ListView
+    lateinit var sendMsg: EditText
 
 
     var devices: MutableList<BluetoothDevice> = mutableListOf()
@@ -33,7 +38,7 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
     override fun onAttach(activity: Activity) {
         Log.e(TAG, "onAttach")
         super.onAttach(activity)
-        bluetooth = Bluetooth(activity)
+        bluetooth = palarax.arduino_wifi.services.Bluetooth(activity)
         bluetooth.enableBluetooth()
     }
 
@@ -50,13 +55,14 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Log.e(TAG, "onActivityCreated")
+        checkPermissions()
         //create ListView to see scanned Bluetooth devices
         listView = view.findViewById(R.id.scan_list) as ListView
         adapter = ArrayAdapter(activity, android.R.layout.simple_list_item_1, ArrayList<String>())
         listView.adapter = adapter
         listView.onItemClickListener = this
         listView.isEnabled = false
-
+        sendMsg = view.findViewById(R.id.sendMsg) as EditText
 
         //set Bluetooth Callback
         bluetooth.setCommunicationCallback(this)
@@ -66,9 +72,9 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
         val btnScan = view.findViewById(R.id.btnScan) as Button
         btnScan.setOnClickListener({
             // Handler code here.
+            Log.e(TAG, "SCANNING")
             adapter.clear()
             devices.clear()
-            //adapter.add("test")
             btnScan.isEnabled = false
             bluetooth.scanDevices()
 
@@ -76,25 +82,49 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
                     Toast.LENGTH_SHORT).show()
         })
 
-        val btnConnect = view.findViewById(R.id.btnConnect) as Button
-        btnConnect.setOnClickListener({
+        val btnSend = view.findViewById(R.id.btnSend) as Button
+        btnSend.setOnClickListener({
             // Handler code here.
             Log.e(TAG,"Socket: "+bluetooth.socket)
             Log.e(TAG,"Paired Devices: "+bluetooth.pairedDevices)
-            //bluetooth.uu
+
+            bluetooth.send(sendMsg.text.toString())
+
         })
     }
 
+    private fun checkPermissions(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !== android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+                    PERMISSIONS_REQUEST_CODE)
+            return false
+        } else {
+            return true
+        }
+
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE -> {
+                //startScanning here
+                Log.e(TAG, "PERMISSION GRANTED")
+            }
+        }
+    }
+
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-        //TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        Toast.makeText(activity, "Item clicked",
-                Toast.LENGTH_SHORT).show()
 
-        //bluetooth.connectToDevice(devices[position])
         Log.e(TAG,"Clicked on "+devices[position].name)
-        bluetooth.pair(devices[position])
-        Log.e(TAG,"UUID: "+ devices[position].uuids)
-
+        //bluetooth.pair(devices[position])
+        bluetooth.connectToDevice(devices[position])
+        adapter.clear()
+        //btnScan.isEnabled = false
+        //val uuids: Array <ParcelUuid>  = devices[position].uuids
+        //uuids.map { it }.forEach { Log.e(TAG,"UUID: "+ it) }
 
     }
 
@@ -107,7 +137,7 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
 
     override fun onDevice(device: BluetoothDevice) {
         // device found
-        Log.e(TAG, "Device: " + device.name)
+        Log.e(TAG, "Device: " + device.name + " " + device.address)
         devices.add(device)
         adapter.add(device.address + " - " + device.name)
     }
@@ -127,15 +157,26 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
     override fun onConnect(device: BluetoothDevice) {
         // device connected
         Log.e(TAG, "connected to device")
+        activity.runOnUiThread({
+            Toast.makeText(activity, "Connected to " + device.name,
+                    Toast.LENGTH_SHORT).show()
+            listView.visibility = View.INVISIBLE
+            btnScan.isEnabled = false
+        })
+
     }
 
     override fun onDisconnect(device: BluetoothDevice, message: String) {
         // device disconnected
         Log.e(TAG, "disconnected from device")
+        activity.runOnUiThread({
+            listView.visibility = View.VISIBLE
+        })
     }
 
     override fun onMessage(message: String) {
         // message received (it has to end with a \n to be received)
+        Log.e(TAG, "MESSAGE RECEIVED")
     }
 
     //In both Communication and discovery callback
@@ -157,25 +198,25 @@ class BluetoothFragment: Fragment(), AdapterView.OnItemClickListener,Bluetooth.D
     override fun onResume() {
         super.onResume()
         Log.e(TAG, "onResume")
-        bluetooth.enableBluetooth()
     }
 
     override fun onStart() {
         super.onStart()
         Log.e(TAG, "onStart")
-        bluetooth.enableBluetooth()
+
+        //bluetooth.enableBluetooth()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         Log.e(TAG, "onDestroy")
-        //bluetooth.disableBluetooth()
+        bluetooth.disableBluetooth()
     }
 
     override fun onStop() {
         super.onStop()
         Log.e(TAG, "onStop")
-        //bluetooth.disableBluetooth()
+
     }
 
 }
