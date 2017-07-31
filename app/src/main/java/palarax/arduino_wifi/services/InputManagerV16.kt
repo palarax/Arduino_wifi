@@ -6,6 +6,7 @@ import android.hardware.input.InputManager
 import android.os.Build
 import android.os.Handler
 import android.view.InputDevice
+import android.view.MotionEvent
 import java.util.*
 
 /*
@@ -25,28 +26,26 @@ import java.util.*
  */
 
 
-
-
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-class InputManagerV16(context: Context) {
+class InputManagerV16(context: Context) : InputManagerCompat {
 
     private val mInputManager: InputManager
-    private val mListeners: MutableMap<InputManager.InputDeviceListener, V16InputDeviceListener>
+    private val mListeners: MutableMap<InputManagerCompat.InputDeviceListener, V16InputDeviceListener>
 
     init {
         mInputManager = context.getSystemService(Context.INPUT_SERVICE) as InputManager
-        mListeners = HashMap<InputManager.InputDeviceListener, V16InputDeviceListener>()
+        mListeners = HashMap<InputManagerCompat.InputDeviceListener, V16InputDeviceListener>()
     }
 
-    fun getInputDevice(id: Int): InputDevice {
+    override fun getInputDevice(id: Int): InputDevice {
         return mInputManager.getInputDevice(id)
     }
 
-    val inputDeviceIds: IntArray
+    override val inputDeviceIds: IntArray
         get() = mInputManager.inputDeviceIds
 
-    internal class V16InputDeviceListener(idl: InputManager.InputDeviceListener) : InputManager.InputDeviceListener {
-        val mIDL: InputManager.InputDeviceListener
+    internal class V16InputDeviceListener(idl: InputManagerCompat.InputDeviceListener) : InputManager.InputDeviceListener {
+        val mIDL: InputManagerCompat.InputDeviceListener
 
         init {
             mIDL = idl
@@ -66,18 +65,30 @@ class InputManagerV16(context: Context) {
 
     }
 
-    fun registerInputDeviceListener(listener: InputManager.InputDeviceListener, handler: Handler) {
+    override fun registerInputDeviceListener(listener: InputManagerCompat.InputDeviceListener, handler: Handler?) {
         val v16Listener = V16InputDeviceListener(listener)
         mInputManager.registerInputDeviceListener(v16Listener, handler)
         mListeners.put(listener, v16Listener)
     }
 
-    fun unregisterInputDeviceListener(listener: InputManager.InputDeviceListener) {
+    override fun unregisterInputDeviceListener(listener: InputManagerCompat.InputDeviceListener) {
         val curListener = mListeners.remove(listener)
         if (null != curListener) {
             mInputManager.unregisterInputDeviceListener(curListener)
         }
 
+    }
+
+    override fun onGenericMotionEvent(event: MotionEvent) {
+        // unused in V16
+    }
+
+    override fun onPause() {
+        // unused in V16
+    }
+
+    override fun onResume() {
+        // unused in V16
     }
 
 }

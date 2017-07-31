@@ -1,6 +1,7 @@
 package palarax.arduino_wifi
 
 import android.Manifest
+import android.annotation.TargetApi
 import android.app.Activity
 import android.app.Fragment
 import android.bluetooth.BluetoothDevice
@@ -8,18 +9,19 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import kotlinx.android.synthetic.main.bluetooth_fragment.*
+import palarax.arduino_wifi.services.InputManagerCompat
 import java.util.*
 
 
 /**
  * Created by Ithai on 4/07/2017.
  */
-class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.arduino_wifi.services.Bluetooth.DiscoveryCallback, palarax.arduino_wifi.services.Bluetooth.CommunicationCallback {
+class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.arduino_wifi.services.Bluetooth.DiscoveryCallback,
+        palarax.arduino_wifi.services.Bluetooth.CommunicationCallback, InputManagerCompat.InputDeviceListener {
+
 
     val TAG = "BluetoothFragment"
 
@@ -29,6 +31,7 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
     lateinit var adapter: ArrayAdapter<String>
     lateinit var listView: ListView
     lateinit var sendMsg: EditText
+    lateinit var mInputManager: InputManagerCompat
 
 
     var devices: MutableList<BluetoothDevice> = mutableListOf()
@@ -52,6 +55,7 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
         return inflater?.inflate(R.layout.bluetooth_fragment, container, false)
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Log.e(TAG, "onActivityCreated")
@@ -81,7 +85,6 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
             Toast.makeText(activity, "Scanning",
                     Toast.LENGTH_SHORT).show()
         })
-
         val btnSend = view.findViewById(R.id.btnSend) as Button
         btnSend.setOnClickListener({
             // Handler code here.
@@ -89,32 +92,26 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
             Log.e(TAG,"Paired Devices: "+bluetooth.pairedDevices)
 
             bluetooth.send(sendMsg.text.toString())
+        })
+
+        //Controller Setup
+        mInputManager = InputManagerCompat.Factory.getInputManager(this.context)
+        //mInputManager.registerInputDeviceListener(this, null)
+        val btnController = view.findViewById(R.id.btnController) as Button
+        btnController.isEnabled = false
+        btnController.setOnClickListener({
+            // Handler code here.
+            Log.e(TAG, "Controller")
+            //needs to be here
+            mInputManager.registerInputDeviceListener(this, null)
 
         })
     }
 
-    private fun checkPermissions(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !== android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
-                    PERMISSIONS_REQUEST_CODE)
-            return false
-        } else {
-            return true
-        }
-
+    private fun reset() {
+        //findControllersAndAttachShips();
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            PERMISSIONS_REQUEST_CODE -> {
-                //startScanning here
-                Log.e(TAG, "PERMISSION GRANTED")
-            }
-        }
-    }
 
     override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
 
@@ -128,6 +125,68 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
 
     }
 
+    /* --------------------------CONTROLLER SETUP --------------------------------------------*/
+    override fun onInputDeviceAdded(deviceId: Int) {
+        Log.e(TAG, "onInputDeviceAdded")
+        activity.runOnUiThread({
+            Toast.makeText(activity, "onInputDeviceAdded",
+                    Toast.LENGTH_SHORT).show()
+            btnController.isEnabled = true
+        })
+        val dev = InputDevice.getDevice(deviceId)
+        var deviceString = dev.descriptor
+        bluetooth.send(deviceString)
+
+
+    }
+
+    override fun onInputDeviceChanged(deviceId: Int) {
+        Log.e(TAG, "onInputDeviceChanged")
+        activity.runOnUiThread({
+            Toast.makeText(activity, "onInputDeviceChanged",
+                    Toast.LENGTH_SHORT).show()
+        })
+    }
+
+    override fun onInputDeviceRemoved(deviceId: Int) {
+        Log.e(TAG, "onInputDeviceRemoved")
+        activity.runOnUiThread({
+            Toast.makeText(activity, "onInputDeviceRemoved",
+                    Toast.LENGTH_SHORT).show()
+            reset()
+        })
+
+    }
+
+    /*override fun onGenericMotionEvent(event: MotionEvent): Boolean {
+        mInputManager.onGenericMotionEvent(event)
+
+        return null
+        //return super.onGenericMotionEvent(event)
+    }*/
+
+    private fun getCenteredAxis(event: MotionEvent, device: InputDevice,
+                                axis: Int, historyPos: Int): Float {
+        val range = device.getMotionRange(axis, event.source)
+        if (range != null) {
+            val flat = range.flat
+            val value = if (historyPos < 0)
+                event.getAxisValue(axis)
+            else
+                event.getHistoricalAxisValue(axis, historyPos)
+
+            // Ignore axis values that are within the 'flat' region of the
+            // joystick axis center.
+            // A joystick at rest does not always report an absolute position of
+            // (0,0).
+            if (Math.abs(value) > flat) {
+                return value
+            }
+        }
+        return 0f
+    }
+
+    /* --------------------------BLUETOOTH SETUP --------------------------------------------*/
     //BLUETOOTH DISCOVERY
     override fun onFinish() {
         // scan finished
@@ -162,6 +221,7 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
                     Toast.LENGTH_SHORT).show()
             listView.visibility = View.INVISIBLE
             btnScan.isEnabled = false
+            btnController.isEnabled = true
         })
 
     }
@@ -195,6 +255,7 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
 
     }
 
+    /* --------------------------Activity SETUP --------------------------------------------*/
     override fun onResume() {
         super.onResume()
         Log.e(TAG, "onResume")
@@ -210,13 +271,38 @@ class BluetoothFragment : Fragment(), AdapterView.OnItemClickListener, palarax.a
     override fun onDestroy() {
         super.onDestroy()
         Log.e(TAG, "onDestroy")
+        btnController.isEnabled = false
         bluetooth.disableBluetooth()
     }
 
     override fun onStop() {
         super.onStop()
         Log.e(TAG, "onStop")
+        btnController.isEnabled = false
 
+    }
+
+    private fun checkPermissions(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !== android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+                    PERMISSIONS_REQUEST_CODE)
+            return false
+        } else {
+            return true
+        }
+
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE -> {
+                //startScanning here
+                Log.e(TAG, "PERMISSION GRANTED")
+            }
+        }
     }
 
 }

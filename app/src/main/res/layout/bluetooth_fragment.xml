@@ -25,7 +25,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="text"
-            android:textSize="20dp"
+            android:textSize="20sp"
             android:hint="Message"
             android:layout_below="@+id/txt_bluetooth" />
 
@@ -54,12 +54,19 @@
             android:layout_toEndOf="@+id/dummy"
             android:text="Scan" />
 
+        <Button
+            android:id="@+id/btnController"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/btnScan"
+            android:text="Controller On/Off" />
+
         <ListView
             android:id="@+id/scan_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerHorizontal="true"
-            android:layout_below="@+id/btnScan" />
+            android:layout_below="@+id/btnController" />
     </RelativeLayout>
 
 

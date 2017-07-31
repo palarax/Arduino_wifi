@@ -17,10 +17,6 @@
         <item
             android:id="@+id/nav_controls"
             android:icon="@drawable/ic_videogame_asset_black_24dp"
-            android:title="@string/nav_controls" />
-        <item
-            android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
             android:title="@string/nav_configuration" />
     </group>
     <item android:title="Communicate">

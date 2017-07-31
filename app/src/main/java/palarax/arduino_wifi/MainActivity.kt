@@ -169,8 +169,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     .commit()
         } else if (id == R.id.nav_controls) {
 
-        } else if (id == R.id.nav_manage) {
-
         } else if (id == R.id.nav_share) {
 
         } else if (id == R.id.nav_send) {
@@ -191,12 +189,12 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
-    class WifiFragment : Fragment(){
+    /*class WifiFragment : Fragment(){
 
 
         override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
             return inflater?.inflate(R.layout.wifi_fragment,container,false)
         }
-    }
+    }*/
 
 }
