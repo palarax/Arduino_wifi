@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,14 +41,22 @@ public class Bluetooth {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
+    /**
+     * Enable bluetooth on android
+     */
     public void enableBluetooth() {
         if (bluetoothAdapter != null) {
             if (!bluetoothAdapter.isEnabled()) {
                 bluetoothAdapter.enable();
+                Log.e("TEST", "ENABLING");
             }
-        }
+            Log.e("TEST", "ENABLED");
+        } else Log.e("TEST", "DISABLED");
     }
 
+    /**
+     * Disable bluetooth on android
+     */
     public void disableBluetooth() {
         if (bluetoothAdapter != null) {
             if (bluetoothAdapter.isEnabled()) {
@@ -56,11 +65,20 @@ public class Bluetooth {
         }
     }
 
+    /**
+     * Connect to bluetooth device with a bluetooth address
+     *
+     * @param address connect to a device with this address
+     */
     public void connectToAddress(String address) {
         BluetoothDevice device = bluetoothAdapter.getRemoteDevice(address);
         new ConnectThread(device).start();
     }
 
+    /**
+     * Connect to bluetooth device with a bluetooth name
+     * @param name connect to a device with this name
+     */
     public void connectToName(String name) {
         for (BluetoothDevice blueDevice : bluetoothAdapter.getBondedDevices()) {
             if (blueDevice.getName().equals(name)) {
@@ -70,9 +88,14 @@ public class Bluetooth {
         }
     }
 
+    /**
+     * connect to a device
+     * @param device device to connect to
+     */
     public void connectToDevice(BluetoothDevice device) {
         new ConnectThread(device).start();
     }
+
 
     public void disconnect() {
         try {
@@ -83,10 +106,18 @@ public class Bluetooth {
         }
     }
 
+    /**
+     * Is android connected to a bluetooth device
+     * @return true if connected
+     */
     public boolean isConnected() {
         return connected;
     }
 
+    /**
+     * send a string to the bluetooth device
+     * @param msg message to send
+     */
     public void send(String msg) {
         try {
             out.write(msg.getBytes());
@@ -96,6 +127,7 @@ public class Bluetooth {
                 communicationCallback.onDisconnect(device, e.getMessage());
         }
     }
+
 
     private class ReceiveThread extends Thread implements Runnable {
         public void run() {
@@ -167,6 +199,9 @@ public class Bluetooth {
         return device;
     }
 
+    /**
+     * Scan for Bluetooth devices
+     */
     public void scanDevices() {
         IntentFilter filter = new IntentFilter();
 
@@ -180,6 +215,10 @@ public class Bluetooth {
         bluetoothAdapter.startDiscovery();
     }
 
+    /**
+     * Pair with a bluetooth device
+     * @param device bluetooth device to pair with
+     */
     public void pair(BluetoothDevice device) {
         activity.registerReceiver(mPairReceiver, new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED));
         devicePair = device;
@@ -192,6 +231,10 @@ public class Bluetooth {
         }
     }
 
+    /**
+     * Unpair with a bluetooth device
+     * @param device bluetooth device to unpair with
+     */
     public void unpair(BluetoothDevice device) {
         devicePair = device;
         try {
@@ -262,6 +305,7 @@ public class Bluetooth {
 
         void onConnectError(BluetoothDevice device, String message);
     }
+
 
     public void setCommunicationCallback(CommunicationCallback communicationCallback) {
         this.communicationCallback = communicationCallback;
