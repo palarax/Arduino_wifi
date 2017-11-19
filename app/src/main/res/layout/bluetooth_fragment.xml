@@ -3,7 +3,8 @@
     android:id="@+id/bluetooth_frame"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="@dimen/screen_padding">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -62,11 +63,11 @@
             android:text="Controller On/Off" />
 
         <ListView
-            android:id="@+id/scan_list"
+            android:id="@+id/bluetooth_list_scan"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_centerHorizontal="true"
+            android:layout_height="wrap_content"
             android:layout_below="@+id/btnController" />
+
     </RelativeLayout>
 
 

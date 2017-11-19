@@ -21,8 +21,12 @@ import java.util.UUID;
 
 /**
  * Created by Omar on 14/07/2015.
+ * https://github.com/OmarAflak/Bluetooth-Library
  */
 public class Bluetooth {
+
+    //TODO: https://developer.android.com/samples/BluetoothChat/src/com.example.android.bluetoothchat/BluetoothChatService.html
+
     private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothSocket socket;
@@ -48,10 +52,8 @@ public class Bluetooth {
         if (bluetoothAdapter != null) {
             if (!bluetoothAdapter.isEnabled()) {
                 bluetoothAdapter.enable();
-                Log.e("TEST", "ENABLING");
             }
-            Log.e("TEST", "ENABLED");
-        } else Log.e("TEST", "DISABLED");
+        }
     }
 
     /**

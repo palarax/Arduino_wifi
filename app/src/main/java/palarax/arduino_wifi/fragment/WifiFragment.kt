@@ -1,7 +1,9 @@
 package palarax.arduino_wifi.fragment
 
+import android.Manifest
 import android.app.Activity
 import android.app.Fragment
+import android.content.pm.PackageManager
 import android.os.AsyncTask
 import android.os.Build
 import android.os.Bundle
@@ -23,6 +25,8 @@ class WifiFragment : Fragment(), InputManagerCompat.InputDeviceListener {
 
 
     val TAG = "WIFI_FRAGMENT"
+
+    private val PERMISSIONS_REQUEST_CODE = 101
 
     lateinit var hostIP: EditText
     lateinit var hostPort: EditText
@@ -273,5 +277,29 @@ class WifiFragment : Fragment(), InputManagerCompat.InputDeviceListener {
         Log.e(TAG, "onStop")
     }
 
+    //TODO: check if wifi permissions needed
+    private fun checkPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && (activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
+            requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+                    PERMISSIONS_REQUEST_CODE)
+            false
+        } else {
+            true
+        }
+
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE -> {
+                //startScanning here
+                Log.e(TAG, "PERMISSION GRANTED")
+
+            }
+        }
+    }
 
 }

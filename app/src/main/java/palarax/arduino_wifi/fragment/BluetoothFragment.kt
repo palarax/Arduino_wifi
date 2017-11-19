@@ -1,10 +1,9 @@
 package palarax.arduino_wifi.fragment
 
-import android.Manifest
 import android.annotation.TargetApi
 import android.app.Activity
 import android.app.Fragment
-import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.bluetooth.BluetoothDevice
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +11,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Toast
+import kotlinx.android.synthetic.main.bluetooth_fragment.*
 import palarax.arduino_wifi.R
 import palarax.arduino_wifi.`interface`.BluetoothFragContract
 import palarax.arduino_wifi.presenter.BluetoothPresenter
@@ -21,14 +23,15 @@ import palarax.arduino_wifi.services.Bluetooth
 /**
  * Created by Ithai on 4/07/2017.
  */
-class BluetoothFragment : Fragment(), BluetoothFragContract.View {
+class BluetoothFragment : Fragment(), BluetoothFragContract.View, Bluetooth.DiscoveryCallback {
 
     val mPresenter: BluetoothPresenter by lazy { BluetoothPresenter(this) }
 
     private val TAG: String = BluetoothFragment::class.java.simpleName
-    private val PERMISSIONS_REQUEST_CODE = 101
 
     private var mBluetooth: Bluetooth = Bluetooth(activity)
+
+    private var mDeviceList: ArrayList<String> = ArrayList()
 
     //attaches an acitivity
     override fun onAttach(activity: Activity) {
@@ -51,10 +54,16 @@ class BluetoothFragment : Fragment(), BluetoothFragContract.View {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Log.e(TAG, "onActivityCreated")
-        checkPermissions()
+        //Location permissions might need to be needed for bluetooth, so far not needed
         mBluetooth.enableBluetooth()
 
+        btnSend.setOnClickListener {
+            Toast.makeText(context, "WORKED", Toast.LENGTH_SHORT).show()
+        }
+
+
     }
+
 
 
     fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -69,6 +78,28 @@ class BluetoothFragment : Fragment(), BluetoothFragContract.View {
 
     }
 
+    /* --------------------------Bluetooth SETUP --------------------------------------------*/
+    override fun onFinish() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onDevice(device: BluetoothDevice?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        bluetooth_list_scan.adapter = ArrayAdapter<String>(activity,
+                android.R.layout.simple_list_item_1, mDeviceList)
+    }
+
+    override fun onPair(device: BluetoothDevice?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onUnpair(device: BluetoothDevice?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun onError(message: String?) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
 
     /* --------------------------Activity SETUP --------------------------------------------*/
     override fun onResume() {
@@ -87,28 +118,6 @@ class BluetoothFragment : Fragment(), BluetoothFragContract.View {
         Log.e(TAG, "onDestroy")
     }
 
-    private fun checkPermissions(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-                && (activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PERMISSION_GRANTED)) {
-            requestPermissions(
-                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
-                    PERMISSIONS_REQUEST_CODE)
-            false
-        } else {
-            true
-        }
 
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            PERMISSIONS_REQUEST_CODE -> {
-                //startScanning here
-                Log.e(TAG, "PERMISSION GRANTED")
-                mBluetooth.enableBluetooth()
-            }
-        }
-    }
 
 }
