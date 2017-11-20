@@ -1,9 +1,11 @@
 package palarax.arduino_wifi.fragment
 
+import android.Manifest
 import android.annotation.TargetApi
 import android.app.Activity
 import android.app.Fragment
 import android.bluetooth.BluetoothDevice
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -23,22 +25,21 @@ import palarax.arduino_wifi.services.Bluetooth
 /**
  * Created by Ithai on 4/07/2017.
  */
-class BluetoothFragment : Fragment(), BluetoothFragContract.View, Bluetooth.DiscoveryCallback {
+class BluetoothFragment : Fragment(), BluetoothFragContract.View, Bluetooth.DiscoveryCallback,
+        Bluetooth.CommunicationCallback, AdapterView.OnItemClickListener {
+
 
     val mPresenter: BluetoothPresenter by lazy { BluetoothPresenter(this) }
+    private val PERMISSIONS_REQUEST_CODE = 101
 
     private val TAG: String = BluetoothFragment::class.java.simpleName
 
-    private var mBluetooth: Bluetooth = Bluetooth(activity)
+    private lateinit var mBluetooth: Bluetooth
 
     private var mDeviceList: ArrayList<String> = ArrayList()
 
-    //attaches an acitivity
-    override fun onAttach(activity: Activity) {
-        Log.e(TAG, "onAttach")
-        super.onAttach(activity)
+    private lateinit var mBluetoothListAdapter: ArrayAdapter<String>
 
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.e(TAG, "onCreate")
@@ -54,39 +55,50 @@ class BluetoothFragment : Fragment(), BluetoothFragContract.View, Bluetooth.Disc
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         Log.e(TAG, "onActivityCreated")
-        //Location permissions might need to be needed for bluetooth, so far not needed
+
+        checkPermissions()
+
+        mBluetooth = Bluetooth(activity)
         mBluetooth.enableBluetooth()
+
+        mBluetooth.setDiscoveryCallback(this)
+        mBluetooth.setCommunicationCallback(this)
+
+        mBluetoothListAdapter = ArrayAdapter<String>(activity,
+                android.R.layout.simple_list_item_1, mDeviceList)
+        bluetooth_list_scan.adapter = mBluetoothListAdapter
+        bluetooth_list_scan.onItemClickListener = this
 
         btnSend.setOnClickListener {
             Toast.makeText(context, "WORKED", Toast.LENGTH_SHORT).show()
+            mBluetooth.send(sendMsg.text.toString())
+        }
+
+        btnScan.setOnClickListener {
+            mBluetooth.scanDevices()
         }
 
 
     }
 
-
-
-    fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-
-        //Log.e(TAG,"Clicked on "+devices[position].name)
-        //bluetooth.pair(devices[position])
-        //bluetooth.connectToDevice(devices[position])
-        //adapter.clear()
-        //btnScan.isEnabled = false
-        //val uuids: Array <ParcelUuid>  = devices[position].uuids
-        //uuids.map { it }.forEach { Log.e(TAG,"UUID: "+ it) }
-
+    override fun onItemClick(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+        //mBluetooth.removeDiscoveryCallback()
+        Log.e(TAG, "Clicked on " + parent!!.getItemAtPosition(position))
+        mBluetooth.connectToName(parent.getItemAtPosition(position).toString())
+        //mBluetooth.pair
+        btnScan.isEnabled = false
     }
+
 
     /* --------------------------Bluetooth SETUP --------------------------------------------*/
     override fun onFinish() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        mBluetooth.removeDiscoveryCallback()
     }
 
     override fun onDevice(device: BluetoothDevice?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        bluetooth_list_scan.adapter = ArrayAdapter<String>(activity,
-                android.R.layout.simple_list_item_1, mDeviceList)
+        mDeviceList.add(device!!.name)
+        mBluetoothListAdapter.notifyDataSetChanged()
+
     }
 
     override fun onPair(device: BluetoothDevice?) {
@@ -98,7 +110,26 @@ class BluetoothFragment : Fragment(), BluetoothFragContract.View, Bluetooth.Disc
     }
 
     override fun onError(message: String?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        Log.e(TAG, "BLUETOOTH ERROR")
+    }
+
+
+    override fun onConnect(device: BluetoothDevice?) {
+        activity.runOnUiThread {
+            Toast.makeText(activity, "Connected to: " + device!!.name, Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    override fun onDisconnect(device: BluetoothDevice?, message: String?) {
+        Log.e(TAG, String.format("Disconnected from %s error: %s", device!!.name, message))
+    }
+
+    override fun onMessage(message: String?) {
+        Log.e(TAG, "Message: " + message)
+    }
+
+    override fun onConnectError(device: BluetoothDevice?, message: String?) {
+        Log.e(TAG, String.format("Error connecting to %s with error: %s", device!!.name, message))
     }
 
     /* --------------------------Activity SETUP --------------------------------------------*/
@@ -118,6 +149,28 @@ class BluetoothFragment : Fragment(), BluetoothFragContract.View, Bluetooth.Disc
         Log.e(TAG, "onDestroy")
     }
 
+    private fun checkPermissions(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+                && (activity.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
+            requestPermissions(
+                    arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+                    PERMISSIONS_REQUEST_CODE)
+            false
+        } else {
+            true
+        }
+
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            PERMISSIONS_REQUEST_CODE -> {
+                //startScanning here
+                mBluetooth.enableBluetooth()
+            }
+        }
+    }
 
 
 }

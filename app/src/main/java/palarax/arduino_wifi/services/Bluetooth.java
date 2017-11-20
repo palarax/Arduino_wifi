@@ -3,6 +3,7 @@ package palarax.arduino_wifi.services;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -14,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +29,10 @@ public class Bluetooth {
 
     //TODO: https://developer.android.com/samples/BluetoothChat/src/com.example.android.bluetoothchat/BluetoothChatService.html
 
-    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805f9b34fb");
+    private static final UUID MY_UUID = UUID.fromString("0000112f-0000-1000-8000-00805f9b34fb");
+
+    private static final String TAG = "CustomBluetoothService";
+
     private BluetoothAdapter bluetoothAdapter;
     private BluetoothSocket socket;
     private BluetoothDevice device, devicePair;
@@ -82,9 +87,12 @@ public class Bluetooth {
      * @param name connect to a device with this name
      */
     public void connectToName(String name) {
+        Log.e(TAG, "NAME: " + name);
         for (BluetoothDevice blueDevice : bluetoothAdapter.getBondedDevices()) {
+            Log.e(TAG, "Device: " + blueDevice.getName());
             if (blueDevice.getName().equals(name)) {
                 connectToAddress(blueDevice.getAddress());
+                Log.e(TAG, "found device: " + blueDevice.getName());
                 return;
             }
         }
@@ -150,19 +158,29 @@ public class Bluetooth {
     private class ConnectThread extends Thread {
         public ConnectThread(BluetoothDevice device) {
             Bluetooth.this.device = device;
-            try {
-                Bluetooth.this.socket = device.createRfcommSocketToServiceRecord(MY_UUID);
-            } catch (IOException e) {
-                if (communicationCallback != null)
-                    communicationCallback.onError(e.getMessage());
-            }
+
+            //create a socket
+            Bluetooth.this.socket = createRfcommSocket(device);
         }
 
         public void run() {
             bluetoothAdapter.cancelDiscovery();
-
             try {
                 socket.connect();
+            } catch (IOException connectException) {
+                if (communicationCallback != null)
+                    communicationCallback.onConnectError(device, connectException.getMessage());
+
+                try {
+                    socket.close();
+                } catch (IOException closeException) {
+                    Log.e(TAG, "Could not close the client socket", closeException);
+                }
+                return;
+            }
+
+            try {
+
                 out = socket.getOutputStream();
                 input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 connected = true;
@@ -212,7 +230,6 @@ public class Bluetooth {
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         filter.addAction(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-
         activity.registerReceiver(mReceiverScan, filter);
         bluetoothAdapter.startDiscovery();
     }
@@ -252,6 +269,7 @@ public class Bluetooth {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            Log.e("Bluetooth", "action onReceive: " + action);
 
             switch (action) {
                 case BluetoothAdapter.ACTION_STATE_CHANGED:
@@ -267,13 +285,39 @@ public class Bluetooth {
                         discoveryCallback.onFinish();
                     break;
                 case BluetoothDevice.ACTION_FOUND:
+                    Log.e("Bluetooth", "ACTION FOUND");
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    if (discoveryCallback != null)
+                    if (discoveryCallback != null) {
                         discoveryCallback.onDevice(device);
+                    }
                     break;
             }
         }
     };
+
+    /**
+     * Creates a socket connection
+     *
+     * @param device device to connect to
+     * @return BluetoothSocket connection
+     */
+    private static BluetoothSocket createRfcommSocket(BluetoothDevice device) {
+        BluetoothSocket tmp = null;
+        try {
+            Class class1 = device.getClass();
+            Class aclass[] = new Class[1];
+            aclass[0] = Integer.TYPE;
+            Method method = class1.getMethod("createRfcommSocket", aclass);
+            Object aobj[] = new Object[1];
+            aobj[0] = Integer.valueOf(1);
+
+            tmp = (BluetoothSocket) method.invoke(device, aobj);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            e.printStackTrace();
+            Log.e(TAG, "createRfcommSocket() failed", e);
+        }
+        return tmp;
+    }
 
     private final BroadcastReceiver mPairReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
